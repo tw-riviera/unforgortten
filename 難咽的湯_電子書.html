@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>難咽的湯 | 電子書</title>
+    <style>
+        :root {
+            --paper: #f5f0e6;
+            --paper-rgb: 245, 240, 230;
+            --ink: #2c2419;
+            --ink-light: #5a4d3b;
+            --red: #8b2635;
+            --red-dark: #5c1822;
+            --gold: #b8956a;
+            --gold-light: #d4c5b0;
+            --shadow: rgba(44, 36, 25, 0.08);
+            --border: rgba(44, 36, 25, 0.12);
+            --font-serif: 'Noto Serif TC', 'Source Han Serif TC', 'Songti SC', 'SimSun', 'STSong', serif;
+            --font-sans: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --paper: #1a1512;
+            --paper-rgb: 26, 21, 18;
+            --ink: #d4c5b0;
+            --ink-light: #a89a85;
+            --red: #c44a5c;
+            --red-dark: #8b2635;
+            --gold: #d4a574;
+            --gold-light: #5a4d3b;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --border: rgba(212, 197, 176, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-serif);
+            background-color: var(--paper);
+            color: var(--ink);
+            line-height: 1.9;
+            font-size: 18px;
+            transition: background-color 0.5s ease, color 0.5s ease;
+            overflow-x: hidden;
+        }
+
+        /* 紙張紋理 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.4;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            z-index: 1000;
+            mix-blend-mode: multiply;
+        }
+
+        [data-theme="dark"] body::before {
+            opacity: 0.15;
+            mix-blend-mode: screen;
+        }
+
+        /* 頂部導航 */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(var(--paper-rgb), 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .book-title-sm {
+            font-size: 15px;
+            letter-spacing: 0.15em;
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--ink);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .icon-btn:hover {
+            background: var(--red);
+            color: var(--paper);
+            border-color: var(--red);
+            transform: translateY(-1px);
+        }
+
+        /* 進度條 */
+        .progress-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: 2px;
+            background: var(--red);
+            width: 0%;
+            z-index: 101;
+            transition: width 0.1s linear;
+        }
+
+        /* 側邊目錄 */
+        .toc-sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            width: 280px;
+            background: rgba(var(--paper-rgb), 0.95);
+            border-right: 1px solid var(--border);
+            padding: 32px 24px;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 99;
+        }
+
+        .toc-sidebar.open {
+            transform: translateX(0);
+        }
+
+        .toc-title {
+            font-size: 13px;
+            letter-spacing: 0.3em;
+            color: var(--gold);
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            font-family: var(--font-sans);
+        }
+
+        .toc-list {
+            list-style: none;
+        }
+
+        .toc-item {
+            margin-bottom: 4px;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 10px 12px;
+            color: var(--ink-light);
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover,
+        .toc-link.active {
+            color: var(--red);
+            background: rgba(139, 38, 53, 0.06);
+            border-left-color: var(--red);
+            padding-left: 16px;
+        }
+
+        /* 主內容區 */
+        .main-wrapper {
+            min-height: 100vh;
+            padding-top: 60px;
+            transition: margin-left 0.4s ease;
+        }
+
+        .main-wrapper.toc-open {
+            margin-left: 280px;
+        }
+
+        .content {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 60px 32px 120px;
+        }
+
+        /* 封面 */
+        .cover {
+            min-height: calc(100vh - 60px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 24px;
+            position: relative;
+        }
+
+        .cover-decoration {
+            width: 120px;
+            height: 120px;
+            border: 1px solid var(--gold);
+            transform: rotate(45deg);
+            margin-bottom: 48px;
+            position: relative;
+            opacity: 0.6;
+        }
+
+        .cover-decoration::before {
+            content: '';
+            position: absolute;
+            inset: 12px;
+            border: 1px solid var(--red);
+            opacity: 0.5;
+        }
+
+        .cover-ornament {
+            position: absolute;
+            font-size: 24px;
+            color: var(--gold);
+            transform: rotate(-45deg);
+        }
+
+        .cover-subtitle {
+            font-size: 13px;
+            letter-spacing: 0.4em;
+            color: var(--gold);
+            margin-bottom: 24px;
+            font-family: var(--font-sans);
+        }
+
+        .cover h1 {
+            font-size: clamp(42px, 10vw, 72px);
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            color: var(--red);
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 var(--shadow);
+        }
+
+        .cover-divider {
+            width: 60px;
+            height: 1px;
+            background: var(--gold);
+            margin: 32px auto;
+        }
+
+        .cover-meta {
+            font-size: 15px;
+            color: var(--ink-light);
+            letter-spacing: 0.1em;
+            line-height: 2;
+        }
+
+        .cover-quote {
+            max-width: 480px;
+            margin-top: 48px;
+            font-size: 15px;
+            color: var(--ink-light);
+            font-style: italic;
+            line-height: 2;
+            border-left: 2px solid var(--red);
+            padding-left: 20px;
+            text-align: left;
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            animation: breathe 2s ease-in-out infinite;
+            cursor: pointer;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.5; transform: translateX(-50%) translateY(0); }
+            50% { opacity: 1; transform: translateX(-50%) translateY(6px); }
+        }
+
+        /* 章節 */
+        .chapter {
+            display: none;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .chapter.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chapter-header {
+            text-align: center;
+            margin-bottom: 56px;
+            padding-top: 40px;
+        }
+
+        .chapter-number {
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+            line-height: 44px;
+            border: 2px solid var(--red);
+            border-radius: 50%;
+            color: var(--red);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-family: var(--font-sans);
+        }
+
+        .chapter h2 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            color: var(--ink);
+            margin-bottom: 16px;
+        }
+
+        .chapter-divider {
+            width: 40px;
+            height: 1px;
+            background: var(--gold);
+            margin: 0 auto;
+        }
+
+        .chapter p {
+            margin-bottom: 1.6em;
+            text-align: justify;
+            text-indent: 2em;
+            font-size: 1em;
+        }
+
+        .chapter p.no-indent {
+            text-indent: 0;
+        }
+
+        /* 對話樣式 */
+        .dialogue {
+            padding-left: 2em;
+            border-left: 3px solid var(--gold-light);
+            margin: 2em 0;
+            color: var(--ink);
+        }
+
+        .dialogue p {
+            text-indent: 0;
+            margin-bottom: 0.8em;
+        }
+
+        /* 分隔線 */
+        .scene-break {
+            text-align: center;
+            margin: 3em 0;
+            color: var(--gold);
+            letter-spacing: 1em;
+            font-size: 14px;
+        }
+
+        /* 章節導航 */
+        .chapter-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 64px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+            gap: 16px;
+        }
+
+        .chapter-nav-btn {
+            flex: 1;
+            max-width: 220px;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--ink);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .chapter-nav-btn:hover:not(:disabled) {
+            background: var(--red);
+            color: var(--paper);
+            border-color: var(--red);
+        }
+
+        .chapter-nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .chapter-nav-btn:hover:not(:disabled) .nav-label {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .nav-title {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* 設定面板 */
+        .settings-panel {
+            position: fixed;
+            top: 60px;
+            right: 0;
+            width: 300px;
+            bottom: 0;
+            background: rgba(var(--paper-rgb), 0.98);
+            border-left: 1px solid var(--border);
+            padding: 32px 28px;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 99;
+            overflow-y: auto;
+        }
+
+        .settings-panel.open {
+            transform: translateX(0);
+        }
+
+        .settings-title {
+            font-size: 13px;
+            letter-spacing: 0.3em;
+            color: var(--gold);
+            margin-bottom: 28px;
+            font-family: var(--font-sans);
+        }
+
+        .setting-group {
+            margin-bottom: 28px;
+        }
+
+        .setting-label {
+            font-size: 13px;
+            color: var(--ink-light);
+            margin-bottom: 12px;
+            display: block;
+            letter-spacing: 0.1em;
+        }
+
+        .font-size-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .size-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--ink);
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: var(--font-serif);
+            transition: all 0.2s ease;
+        }
+
+        .size-btn:hover {
+            background: var(--red);
+            color: var(--paper);
+            border-color: var(--red);
+        }
+
+        .size-display {
+            flex: 1;
+            text-align: center;
+            font-size: 14px;
+            color: var(--ink-light);
+        }
+
+        .theme-options {
+            display: flex;
+            gap: 12px;
+        }
+
+        .theme-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--ink);
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn.active {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(139, 38, 53, 0.06);
+        }
+
+        .line-height-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lh-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--ink);
+            transition: all 0.2s ease;
+        }
+
+        .lh-btn.active {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(139, 38, 53, 0.06);
+        }
+
+        /* 頁腳 */
+        .book-end {
+            text-align: center;
+            margin-top: 80px;
+            padding: 40px;
+            color: var(--gold);
+            font-style: italic;
+            letter-spacing: 0.3em;
+        }
+
+        .end-ornament {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        /* 遮罩 */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 98;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 返回頂部 */
+        .back-to-top {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--border);
+            background: rgba(var(--paper-rgb), 0.95);
+            color: var(--ink);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 90;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            background: var(--red);
+            color: var(--paper);
+            border-color: var(--red);
+        }
+
+        /* 響應式 */
+        @media (max-width: 1024px) {
+            .main-wrapper.toc-open {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 17px;
+            }
+
+            .top-bar {
+                padding: 0 16px;
+            }
+
+            .book-title-sm {
+                font-size: 13px;
+            }
+
+            .content {
+                padding: 40px 24px 100px;
+            }
+
+            .cover h1 {
+                font-size: 48px;
+            }
+
+            .toc-sidebar {
+                width: 260px;
+            }
+
+            .settings-panel {
+                width: 100%;
+            }
+
+            .chapter-nav {
+                flex-direction: column;
+            }
+
+            .chapter-nav-btn {
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+
+        /* 打印樣式 */
+        @media print {
+            .top-bar, .toc-sidebar, .settings-panel, .overlay, .back-to-top, .chapter-nav, .scroll-hint {
+                display: none !important;
+            }
+            .chapter {
+                display: block !important;
+                page-break-after: always;
+            }
+            .main-wrapper {
+                padding-top: 0;
+                margin-left: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 頂部導航 -->
+    <header class="top-bar">
+        <button class="icon-btn" id="tocBtn" title="目錄">☰</button>
+        <div class="book-title-sm">難咽的湯</div>
+        <div class="nav-buttons">
+            <button class="icon-btn" id="prevBtn" title="上一章">‹</button>
+            <button class="icon-btn" id="nextBtn" title="下一章">›</button>
+            <button class="icon-btn" id="settingsBtn" title="閱讀設定">⚙</button>
+        </div>
+    </header>
+
+    <!-- 進度條 -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- 遮罩 -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- 目錄側邊欄 -->
+    <nav class="toc-sidebar" id="tocSidebar">
+        <div class="toc-title">目 錄</div>
+        <ul class="toc-list" id="tocList"></ul>
+    </nav>
+
+    <!-- 設定面板 -->
+    <aside class="settings-panel" id="settingsPanel">
+        <div class="settings-title">閱讀設定</div>
+        
+        <div class="setting-group">
+            <label class="setting-label">字體大小</label>
+            <div class="font-size-controls">
+                <button class="size-btn" data-action="decrease">A−</button>
+                <span class="size-display" id="sizeDisplay">18px</span>
+                <button class="size-btn" data-action="increase">A+</button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">主題配色</label>
+            <div class="theme-options">
+                <button class="theme-btn active" data-theme="light">紙色</button>
+                <button class="theme-btn" data-theme="dark">墨色</button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">行距</label>
+            <div class="line-height-options">
+                <button class="lh-btn" data-lh="1.6">緊</button>
+                <button class="lh-btn active" data-lh="1.9">適中</button>
+                <button class="lh-btn" data-lh="2.3">寬</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主內容 -->
+    <main class="main-wrapper" id="mainWrapper">
+        <div class="content">
+            <!-- 封面 -->
+            <section class="cover" id="cover">
+                <div class="cover-decoration">
+                    <span class="cover-ornament">釵</span>
+                </div>
+                <div class="cover-subtitle">一九二四年 · 舊香港 · 輪迴</div>
+                <h1>難咽的湯</h1>
+                <div class="cover-divider"></div>
+                <div class="cover-meta">
+                    改編自同名歌詞<br>
+                    一個關於戲班、門第與不忘的故事
+                </div>
+                <div class="cover-quote">
+                    「那如果有孟婆湯，你喝不喝？」<br>
+                    「那我便記得她。記到她認出我為止。」
+                </div>
+                <div class="scroll-hint" id="scrollHint">開始閱讀 ↓</div>
+            </section>
+
+            <!-- 章節容器 -->
+            <div id="chaptersContainer"></div>
+
+            <!-- 結尾 -->
+            <div class="book-end" id="bookEnd" style="display: none;">
+                <div class="end-ornament">❧</div>
+                <div>（完）</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 返回頂部 -->
+    <button class="back-to-top" id="backToTop" title="返回頂部">↑</button>
+
+    <script>
+        // 章節資料
+        const chapters = [
+            {
+                title: "汽燈",
+                content: `
+                    <p>阿蕭第一次見到碧釵，是在一盞汽燈底下。</p>
+                    <p>那是一九二四年的中秋，上環太平山街的戲棚剛搭好，紅布幔被海風吹得獵獵作響。他本是戲班裡的二幫小生，專演被棒打鴛鴦的窮書生，那晚卻因為正印小生臨時啞了嗓子，被推上了台。他唱的是《帝女花》的〈香夭〉，聲音不高，卻像一根細線，穿過鑼鼓與人聲，直直縫進夜裡。</p>
+                    <p>台下坐滿了街邊的販夫走卒，也坐了幾頂洋行的買辦。碧釵就在那幾頂轎子旁邊，穿著藕色短襖，髮髻上插了支玉碧釵，在汽燈下一晃一晃。</p>
+                    <p>她是大洋行老闆的獨女，據說剛從英國讀書回來，粵語已經不太俐落，卻仍愛看戲。老倌們搶破了風頭，她只靜靜坐在那裡，像一尊瓷觀音。阿蕭在台上偷瞄她，忽然覺得自己唱的不是長平公主，是自己。</p>
+                    <p>戲散後，班主收了賞錢，吩咐阿蕭去給貴客斟茶。他捧著茶盤走近，碧釵抬眼看他，問：「你叫什麼名字？」</p>
+                    <div class="dialogue">
+                        <p>「阿蕭。」</p>
+                        <p>「哪個蕭？」</p>
+                        <p>「簫管的蕭。」</p>
+                    </div>
+                    <p>她笑了，從髻上拔下那支玉碧釵，在茶盤邊輕輕敲了敲：「這個蕭，還是這個釵？」</p>
+                    <p>阿蕭答不上來。他從未想過，一個人的名字可以被問得這樣輕，又這樣重。</p>
+                `
+            },
+            {
+                title: "燈謎",
+                content: `
+                    <p>他們往來的方式很隱蔽。舊香港有的是燈謎、堂會、慈善戲，不缺讓兩人擦肩的場合。她故意不猜他的謎，他故意不唱她點的曲。彼此的心事像鼻煙壺裡的粉末，輕輕一舀，就嗆得人眼眶發熱。</p>
+                    <p>碧釵的父親是德國洋行的買辦，家住半山，出入有轎、有僕。阿蕭住擺花街窄巷的板間房，與大洋行只隔幾條街，卻像隔了幾座山。她來看他排戲時，總要帶著女僕，扮作尋常人家的閨秀。他請她喝涼茶，她請他吃蓮蓉月餅。兩人坐在後台的木箱上，聽前面的鑼鼓聲一陣一陣傳來。</p>
+                    <div class="dialogue">
+                        <p>「你信輪迴嗎？」碧釵問過他一次。</p>
+                        <p>阿蕭說：「我們唱戲的人，前世今生都演過了。」</p>
+                        <p>她便低了頭，用鞋尖去踢地上的草繩：「那如果有孟婆湯，你喝不喝？」</p>
+                    </div>
+                    <p>阿蕭沒有回答。他想起戲文裡常唱的那句：「鴛鴦落棒豈止得一對。」台上台下，被拆散的從來不只一對。他那時還年輕，以為沉默就是承諾。</p>
+                `
+            },
+            {
+                title: "碼頭",
+                content: `
+                    <p>次年春天，碧釵要出嫁的消息傳遍了整條街。</p>
+                    <p>對方是舊金山華僑的兒子，家裡開金鋪，與她父親有生意往來。碧釵沒見過那人，只在訂婚那天遠遠瞥過一張相片。她父親說，這是門好親事，「門當戶對」。她母親說，洋場上的女子，能嫁去金山已是福氣。</p>
+                    <p>她託女僕送了一封信給阿蕭，信裡只有一句：「碼頭，禮拜三，辰時。」</p>
+                    <p>阿蕭去了。他穿著唯一一套乾淨的短打，在碼頭的石柱後面躲了整整一個早晨。霧很大，蒸汽輪船的煙囪吐出濃濃的白煙，把人的眼淚都燻了出來。他看見碧釵穿著西洋婚紗，被一群女眷簇擁著上船。她回頭望了好幾次，但他知道，她看不見他。</p>
+                    <p>她手上攥著一條白手帕，帕角繡著一隻白鶴。阿蕭認得，那是他去年中秋送她的。她說過，要把他寫給她的信都摺成紙鶴，摺滿一千隻，放到維多利亞港裡。</p>
+                    <p>輪船鳴笛時，碼頭上幾個紳士模樣的人掏出手帕按眼角，嘴裡卻笑說：「今日霧真大，嗆得人眼睛疼。」阿蕭沒有哭。他只是把指甲掐進了掌心，像要把什麼東西牢牢按在肉裡。</p>
+                `
+            },
+            {
+                title: "忘川",
+                content: `
+                    <p>碧釵走後第三年，阿蕭死了。</p>
+                    <p>死法並不轟烈。是在一次夜戲返家時，被一輛洋人開的汽車撞倒在擺花街路口。圍觀的人說，他倒下時手裡還攥著一張舊相片，相片上的女子穿著藕色短襖，髻上插著玉碧釵。</p>
+                    <p>他到了陰司，排隊過奈何橋。橋邊的老婆子遞來一碗湯，說：「喝了，前塵盡忘。」</p>
+                    <p>阿蕭看著那碗湯，忽然想起碧釵問過他的話。他抬頭問孟婆：「不喝行不行？」</p>
+                    <div class="dialogue">
+                        <p>孟婆笑了，露出沒牙的嘴：「這橋上每天幾萬人，個個都問這句。你憑什麼不喝？」</p>
+                        <p>「我還要找人。」</p>
+                        <p>「找到了又如何？她喝了，她不記得你。」</p>
+                        <p>「那我便記得她。」阿蕭說，「記到她認出我為止。」</p>
+                    </div>
+                    <p>他把那碗湯潑進了忘川。湯水落河，浮起一層薄薄的油光，像肥皂泡，像碼頭上的霧。他跨過橋去，沒有回頭。</p>
+                `
+            },
+            {
+                title: "輪迴",
+                content: `
+                    <p>之後很多年，阿蕭在輪迴裡漂。</p>
+                    <p>他做過人力車車夫，在雨夜載過一個穿洋服的女子，背影很像碧釵，卻不是她。他做過戲班武行，在台上翻跟斗時，看見台下有個女子頭上插著玉釵，眨眼又不見。他還做過碼頭的搬運工，在蒸汽輪船靠岸時，總要擠到最前面，怕錯過某個人。</p>
+                    <p>每一世他都死得很早，因為不喝孟婆湯的靈魂，總帶著前世的虧欠與執念，活得格外吃力。但他始終記得那支玉碧釵，記得「門不對戶不當」六個字，記得碧釵說話時低低的嗓音，像簫管裡漏出來的一縷風。</p>
+                    <p>他不知道碧釵輪迴到了哪裡。也許她早已喝下湯，嫁了人，過了平凡幸福的一生。也許她也在某處尋找他，只是兩人的命運總像錯開的齒輪，一寸一寸地偏差。</p>
+                `
+            },
+            {
+                title: "重逢",
+                content: `
+                    <p>這一世，阿蕭是一個戲曲博物館的導賞員。</p>
+                    <p>館裡收藏了不少老物件：鼻煙壺、老照片、人力車的滾輪、還有幾支斷了的玉釵。他每天對著遊客講解粵劇的歷史，講老倌的風頭，講擺花街的戲班。沒有人知道，他講的每一個故事裡，都藏著一個人的名字。</p>
+                    <p>有一天，館裡來了一個老婦人，白髮如雪，由孫女攙扶著。她在一張黑白照前停下，照片裡是一個戲班的全家福，正中站著一個年輕小生，眉目清俊。</p>
+                    <p>老婦人看了很久，忽然說：「這個人，我好像見過。」</p>
+                    <div class="dialogue">
+                        <p>阿蕭走過去，心跳得厲害。他問：「夫人，您說的是哪一位？」</p>
+                        <p>老婦人抬起頭，眼睛已經混濁，卻仍有一點光：「這個小生。我年輕時……好像在中環看過他唱戲。」</p>
+                        <p>她的孫女笑說：「嫲嫲，你那時候才幾歲呀，怎麼可能。」</p>
+                    </div>
+                    <p>老婦人也笑了，搖搖頭，繼續往前走。經過阿蕭身邊時，她髻上插著的一支舊玉釵輕輕晃了一下。阿蕭認得那支釵。</p>
+                    <p>他站在原地，沒有追上去。百年了，他想，能再見一面，已經很好。記不記得，又有什麼關係。</p>
+                    <p>但那天晚上，他做了一個夢。夢裡是一九二四年的中秋，太平山街的戲棚下，一個穿藕色短襖的女子對他說：「你叫什麼名字？」</p>
+                    <div class="dialogue">
+                        <p>他答：「阿蕭。」</p>
+                        <p>她問：「哪個蕭？」</p>
+                        <p>他在夢裡忽然哭了，說：「簫管的蕭。也是你髻上那支釵，碧綠的碧。」</p>
+                        <p>女子笑了，伸手替他擦去眼淚。她的手指很涼，像從忘川裡撈出來的。</p>
+                        <p>「我記得了，」她說，「那碗湯，我其實也沒喝。」</p>
+                    </div>
+                `
+            },
+            {
+                title: "雨季",
+                content: `
+                    <p>醒來時，窗外正在下雨。</p>
+                    <p>阿蕭坐在床上，聽見遠處傳來戲曲的鑼鼓聲，不知是哪家電台在播放。他想起歌詞裡那句：「敲聲豈門前，僅雨季訪客。」原來百年之後，再深的執念也不過是一場雨、一個夢、一支晃動的玉釵。</p>
+                    <p>但他還是起身，換了衣服，出門去。博物館今天休館，他卻想去看看那張黑白照。他想，也許那個老婦人還會再來。也許不會。輪迴這件事，本來就不是每一次都能聚完不散。</p>
+                    <p>街角的茶餐廳已經開了門，蒸氣從廚房飄出來，像極了當年碼頭上的霧。阿蕭走進去，點了一碗湯。</p>
+                    <p>湯很燙，他舀了一勺，卻遲遲沒有喝下。</p>
+                    <div class="dialogue">
+                        <p>老闆娘問：「先生，不合胃口嗎？」</p>
+                        <p>阿蕭搖搖頭，把湯匙放回碗裡：「不是。只是這湯，太難咽了。」</p>
+                    </div>
+                    <p>窗外雨聲漸大，像有人在敲一面遠遠的鑼。他知道，總有一天，他會再次遇見她。在陽間，或在冥府；在戲台上，或在某條窄巷的轉角。那時候，他會一眼認出她，不論她的頭髮是青絲還是白花。</p>
+                    <p>因為有些記憶，不是孟婆湯能洗的。</p>
+                `
+            }
+        ];
+
+        // 狀態
+        let currentChapter = -1; // -1 = 封面
+        let fontSize = 18;
+        let lineHeight = 1.9;
+
+        // DOM 元素
+        const tocSidebar = document.getElementById('tocSidebar');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const overlay = document.getElementById('overlay');
+        const mainWrapper = document.getElementById('mainWrapper');
+        const chaptersContainer = document.getElementById('chaptersContainer');
+        const tocList = document.getElementById('tocList');
+        const progressBar = document.getElementById('progressBar');
+        const bookEnd = document.getElementById('bookEnd');
+        const backToTop = document.getElementById('backToTop');
+        const sizeDisplay = document.getElementById('sizeDisplay');
+
+        // 初始化
+        function init() {
+            loadSettings();
+            renderChapters();
+            renderTOC();
+            updateNavButtons();
+            bindEvents();
+        }
+
+        // 載入設定
+        function loadSettings() {
+            const savedFontSize = localStorage.getItem('nanyantang_fontSize');
+            const savedTheme = localStorage.getItem('nanyantang_theme');
+            const savedLH = localStorage.getItem('nanyantang_lineHeight');
+
+            if (savedFontSize) {
+                fontSize = parseInt(savedFontSize);
+                document.body.style.fontSize = fontSize + 'px';
+                sizeDisplay.textContent = fontSize + 'px';
+            }
+
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === savedTheme);
+                });
+            }
+
+            if (savedLH) {
+                lineHeight = parseFloat(savedLH);
+                document.body.style.lineHeight = lineHeight;
+                document.querySelectorAll('.lh-btn').forEach(btn => {
+                    btn.classList.toggle('active', parseFloat(btn.dataset.lh) === lineHeight);
+                });
+            }
+        }
+
+        // 渲染章節
+        function renderChapters() {
+            chaptersContainer.innerHTML = chapters.map((chapter, index) => `
+                <article class="chapter" id="chapter-${index}" data-index="${index}">
+                    <header class="chapter-header">
+                        <div class="chapter-number">${toChineseNumber(index + 1)}</div>
+                        <h2>${chapter.title}</h2>
+                        <div class="chapter-divider"></div>
+                    </header>
+                    <div class="chapter-body">
+                        ${chapter.content}
+                    </div>
+                    <nav class="chapter-nav">
+                        <button class="chapter-nav-btn" id="prevChapterBtn-${index}">
+                            <span class="nav-label">上一章</span>
+                            <span class="nav-title">${index > 0 ? chapters[index - 1].title : '封面'}</span>
+                        </button>
+                        <button class="chapter-nav-btn" id="nextChapterBtn-${index}">
+                            <span class="nav-label">下一章</span>
+                            <span class="nav-title">${index < chapters.length - 1 ? chapters[index + 1].title : '完'}</span>
+                        </button>
+                    </nav>
+                </article>
+            `).join('');
+        }
+
+        // 渲染目錄
+        function renderTOC() {
+            tocList.innerHTML = `
+                <li class="toc-item">
+                    <a href="#cover" class="toc-link ${currentChapter === -1 ? 'active' : ''}" data-index="-1">封面</a>
+                </li>
+                ${chapters.map((chapter, index) => `
+                    <li class="toc-item">
+                        <a href="#chapter-${index}" class="toc-link ${currentChapter === index ? 'active' : ''}" data-index="${index}">
+                            ${toChineseNumber(index + 1)} · ${chapter.title}
+                        </a>
+                    </li>
+                `).join('')}
+            `;
+        }
+
+        // 阿拉伯數字轉中文數字
+        function toChineseNumber(num) {
+            const chars = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+            if (num <= 10) return chars[num];
+            return num.toString().split('').map(d => chars[parseInt(d)]).join('');
+        }
+
+        // 切換章節
+        function goToChapter(index) {
+            // 隱藏所有章節
+            document.querySelectorAll('.chapter').forEach(ch => ch.classList.remove('active'));
+            
+            if (index === -1) {
+                // 封面
+                document.getElementById('cover').style.display = 'flex';
+                bookEnd.style.display = 'none';
+                currentChapter = -1;
+            } else {
+                document.getElementById('cover').style.display = 'none';
+                const chapter = document.getElementById(`chapter-${index}`);
+                chapter.classList.add('active');
+                bookEnd.style.display = index === chapters.length - 1 ? 'block' : 'none';
+                currentChapter = index;
+            }
+
+            renderTOC();
+            updateNavButtons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            closePanels();
+        }
+
+        // 更新導航按鈕狀態
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.disabled = currentChapter <= -1;
+            nextBtn.disabled = currentChapter >= chapters.length - 1;
+        }
+
+        // 開關面板
+        function togglePanel(panel) {
+            const isOpen = panel.classList.contains('open');
+            closePanels();
+            if (!isOpen) {
+                panel.classList.add('open');
+                overlay.classList.add('active');
+                if (window.innerWidth > 1024 && panel === tocSidebar) {
+                    mainWrapper.classList.add('toc-open');
+                }
+            }
+        }
+
+        function closePanels() {
+            tocSidebar.classList.remove('open');
+            settingsPanel.classList.remove('open');
+            overlay.classList.remove('active');
+            mainWrapper.classList.remove('toc-open');
+        }
+
+        // 綁定事件
+        function bindEvents() {
+            // 目錄按鈕
+            document.getElementById('tocBtn').addEventListener('click', () => togglePanel(tocSidebar));
+            
+            // 設定按鈕
+            document.getElementById('settingsBtn').addEventListener('click', () => togglePanel(settingsPanel));
+            
+            // 遮罩
+            overlay.addEventListener('click', closePanels);
+
+            // 目錄連結
+            tocList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('toc-link')) {
+                    e.preventDefault();
+                    const index = parseInt(e.target.dataset.index);
+                    goToChapter(index);
+                }
+            });
+
+            // 上下章按鈕
+            document.getElementById('prevBtn').addEventListener('click', () => {
+                if (currentChapter > -1) goToChapter(currentChapter - 1);
+            });
+            document.getElementById('nextBtn').addEventListener('click', () => {
+                if (currentChapter < chapters.length - 1) goToChapter(currentChapter + 1);
+            });
+
+            // 章節內導航
+            chaptersContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.chapter-nav-btn');
+                if (!btn) return;
+                
+                const index = parseInt(btn.closest('.chapter').dataset.index);
+                if (btn.id.startsWith('prevChapterBtn')) {
+                    goToChapter(index - 1);
+                } else {
+                    goToChapter(index + 1);
+                }
+            });
+
+            // 滾動提示
+            document.getElementById('scrollHint').addEventListener('click', () => {
+                goToChapter(0);
+            });
+
+            // 字體大小
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.action === 'increase' && fontSize < 26) {
+                        fontSize += 1;
+                    } else if (btn.dataset.action === 'decrease' && fontSize > 14) {
+                        fontSize -= 1;
+                    }
+                    document.body.style.fontSize = fontSize + 'px';
+                    sizeDisplay.textContent = fontSize + 'px';
+                    localStorage.setItem('nanyantang_fontSize', fontSize);
+                });
+            });
+
+            // 主題
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const theme = btn.dataset.theme;
+                    document.documentElement.setAttribute('data-theme', theme);
+                    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    localStorage.setItem('nanyantang_theme', theme);
+                });
+            });
+
+            // 行距
+            document.querySelectorAll('.lh-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    lineHeight = parseFloat(btn.dataset.lh);
+                    document.body.style.lineHeight = lineHeight;
+                    document.querySelectorAll('.lh-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    localStorage.setItem('nanyantang_lineHeight', lineHeight);
+                });
+            });
+
+            // 滾動進度
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+                progressBar.style.width = progress + '%';
+
+                if (scrollTop > 400) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
+
+            // 返回頂部
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // 鍵盤導航
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' && currentChapter > -1) {
+                    goToChapter(currentChapter - 1);
+                } else if (e.key === 'ArrowRight' && currentChapter < chapters.length - 1) {
+                    goToChapter(currentChapter + 1);
+                }
+            });
+
+            // ESC 關閉面板
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePanels();
+            });
+        }
+
+        // 啟動
+        init();
+    </script>
+</body>
+</html>
